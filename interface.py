@@ -1,3 +1,4 @@
+import game_state_interfaces
 #import curses
 import inspect
 import json
@@ -12,6 +13,28 @@ import numpy as np
 
 MB = 2 ** 20
 port = 9090
+
+
+def list_roms(console='all'):
+    from game_locations import roms
+    formatted_roms = []
+    def format_rom_names(console):
+        return [{
+            'console': c,
+            'rom': rom,
+        } for rom in roms[console].keys()]
+
+    if console == 'all':
+        for c in roms.keys():
+            formatted_roms.extend(format_rom_names(c))
+    else:
+        formatted_roms.extend(format_rom_names(console))
+    return formatted_roms
+
+
+def get_rom(console, game):
+    from game_locations import roms
+    return roms[console][game]
 
 
 def show_image(image):
@@ -46,7 +69,9 @@ def encode_input(player=0, up=False, down=False, left=False, right=False, select
 
 
 class NESLEInterface:
-    def __init__(self, rom_file):
+    def __init__(self, game):
+        self.state = getattr(games, game)
+        rom_file = get_rom('nes', game)
         self.sock = socket.socket()         # Create a socket object
         self.host = socket.gethostname()  # Get local machine name
         self.sock.connect((self.host, port))
@@ -69,14 +94,20 @@ class NESLEInterface:
         return json.loads(self.sock.recv(MB))
 
     def act(self, action):
-        self.sock.send(packed_input)
+        if type(action) is str:
+            self.sock.send(action)
+        elif type(action) is dict:
+            self.sock.send(encode_input(**action))
+        else:
+            raise TypeError('Action but be either a string or dict')
+
         self.sock.recv_into(self.frame, self.frame_size, socket.MSG_WAITALL)
         return self.frame
 
-    def __num_lives(self):
+    def _num_lives(self):
         pass
 
-    def __game_over(self):
+    def _game_over(self):
         pass
 
     def game_over(self):
@@ -109,10 +140,9 @@ class NESLEInterface:
     def saveScreenPNG(self, filename):
         pass
 
-if __name__ == '__main__':
+def main():
     start_time = time.time()
-    rom = '/home/mcsmash/dev/nestopia/smb.nes'
-    client = EmulatorClient(rom)
+    client = NESLEInterface('super_mario_bros')
     frame_count = 0
     control_sequence = []
     control_sequence.append(
@@ -139,14 +169,18 @@ if __name__ == '__main__':
             countdown = current_control_sequence[1]
         if countdown > 0:
             countdown -= 1
-            frame = client.next_frame(encode_input(**current_control_sequence[2]))
+            frame = client.act(encode_input(**current_control_sequence[2]))
         else:
             if frame_count > current_control_sequence[0]:
                 try:
                     current_control_sequence = control_sequence.pop(0)
                 except(IndexError):
                     pass
-            frame = client.next_frame(encode_input())
+            frame = client.act(encode_input())
         show_image(frame)
         frame_count += 1
         print('frames/sec: {}'.format(frame_count / (time.time() - start_time)))
+
+if __name__ == '__main__':
+    main()
+
