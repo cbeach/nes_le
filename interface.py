@@ -16,7 +16,7 @@ port = 9090
 
 
 def list_roms(console='all'):
-    from game_locations import roms
+    from rom_locations import roms
     formatted_roms = []
     def format_rom_names(console):
         return [{
@@ -33,7 +33,7 @@ def list_roms(console='all'):
 
 
 def get_rom(console, game):
-    from game_locations import roms
+    from rom_locations import roms
     return roms[console][game]
 
 
@@ -67,10 +67,49 @@ def encode_input(player=0, up=False, down=False, left=False, right=False, select
         'player': player,
     })
 
+def action_to_encoded_input(action):
+    mapping = {
+        0: {},
+        1: {"a": True},
+        2: {"b": True},
+        3: {"up": True},
+        4: {"right": True},
+        5: {"left": True},
+        6: {"down": True},
+        7:  {"up": True, "right": True},
+        8:  {"up": True, "left": True},
+        9:  {"down": True, "right": True},
+        10: {"down": True, "left": True},
+        11: {"up": True, "a": True},
+        12: {"right": True, "a": True},
+        13: {"left": True, "a": True},
+        14: {"down": True, "a": True},
+        15: {"up": True, "right": True, "a": True},
+        16: {"up": True, "left": True, "a": True},
+        17: {"down": True, "right": True, "a": True},
+        18: {"down": True, "left": True, "a": True},
+        19: {"up": True, "b": True},
+        20: {"right": True, "b": True},
+        21: {"left": True, "b": True},
+        22: {"down": True, "b": True},
+        23: {"up": True, "right": True, "b": True},
+        24: {"up": True, "left": True, "b": True},
+        25: {"down": True, "right": True, "b": True},
+        26: {"down": True, "left": True, "b": True},
+        27: {"right": True, "a": True, "b": True},
+        28: {"left": True, "a": True, "b": True},
+        29: {"down": True, "a": True, "b": True},
+        30: {"up": True, "right": True, "a": True, "b": True},
+        31: {"up": True, "left": True, "a": True, "b": True},
+        32: {"down": True, "right": True, "a": True, "b": True},
+        33: {"down": True, "left": True, "a": True, "b": True},
+    }
+    return encode_input(**mapping[action])
+
 
 class NESLEInterface:
     def __init__(self, game):
-        self.state = getattr(games, game)
+        self.state = getattr(game_state_interfaces, game).State()
         rom_file = get_rom('nes', game)
         self.sock = socket.socket()         # Create a socket object
         self.host = socket.gethostname()  # Get local machine name
@@ -86,6 +125,8 @@ class NESLEInterface:
         self.frame = np.empty((self.height, self.width, self.depth), dtype=np.uint8)
         self.non_black_frame_received = False
         self.frame_size = self.height * self.width * self.depth
+        self.minimal_action_set = np.array(range(34), dtype='int32')
+        self.legal_action_set = self.minimal_action_set
 
     def loadROM(self, rom_file):
         self.sock.send(json.dumps({
@@ -98,35 +139,33 @@ class NESLEInterface:
             self.sock.send(action)
         elif type(action) is dict:
             self.sock.send(encode_input(**action))
+        elif type(action) is int or issubclass(type(action), np.int_):
+            self.sock.send(action_to_encoded_input(action))
         else:
-            raise TypeError('Action but be either a string or dict')
+            raise TypeError('Action must be a string, a dict, a python int, or a numpy.int_. '
+                            'This includes subclasses of numpy.int_')
 
         self.sock.recv_into(self.frame, self.frame_size, socket.MSG_WAITALL)
+        self.state.new_frame(self.frame)
         return self.frame
 
-    def _num_lives(self):
-        pass
-
-    def _game_over(self):
-        pass
-
     def game_over(self):
-        pass
+        return self.state.game_over()
 
     def reset_game(self):
         pass
 
     def getLegalActionSet(self):
-        pass
+        return self.legal_action_set
 
     def getMinimalActionSet(self):
-        pass
+        return self.minimal_action_set
 
     def getFrameNumber(self):
-        pass
+        self.state.frame_number()
 
     def lives(self):
-        pass
+        return self.state.lives()
 
     def getScreen(self, screen_data=None):
         return self.frame
@@ -138,7 +177,7 @@ class NESLEInterface:
         return cv2.cvtColor(self.frame , cv2.COLOR_BGR2GRAY)
 
     def saveScreenPNG(self, filename):
-        pass
+        cv2.imwrite(filename, self.frame)
 
 def main():
     start_time = time.time()
@@ -179,7 +218,7 @@ def main():
             frame = client.act(encode_input())
         show_image(frame)
         frame_count += 1
-        print('frames/sec: {}'.format(frame_count / (time.time() - start_time)))
+        print('f/s: {}, s: {}, t: {}'.format(frame_count / (time.time() - start_time), client.state.state['score'], client.state.state['time'],))
 
 if __name__ == '__main__':
     main()
