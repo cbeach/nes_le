@@ -1,4 +1,4 @@
-import game_state_interfaces
+from nes_le import game_state_interfaces
 #import curses
 import inspect
 import json
@@ -16,7 +16,7 @@ port = 9090
 
 
 def list_roms(console='all'):
-    from rom_locations import roms
+    from nes_le.rom_locations import roms
     formatted_roms = []
     def format_rom_names(console):
         return [{
@@ -33,7 +33,7 @@ def list_roms(console='all'):
 
 
 def get_rom(console, game):
-    from rom_locations import roms
+    from nes_le.rom_locations import roms
     return roms[console][game]
 
 
