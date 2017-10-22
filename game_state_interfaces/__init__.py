@@ -1,1 +1,1 @@
-import super_mario_bros
+from .super_mario_bros import *

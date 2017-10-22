@@ -2,7 +2,6 @@ import math
 import os
 import sys
 
-from sklearn.tree import DecisionTreeClassifier, export_graphviz
 import cv2
 import numpy as np
 

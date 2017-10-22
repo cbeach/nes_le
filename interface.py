@@ -65,7 +65,8 @@ def encode_input(player=0, up=False, down=False, left=False, right=False, select
     return json.dumps({
         'controls': pressed_buttons,
         'player': player,
-    })
+    }).encode()
+
 
 def action_to_encoded_input(action):
     mapping = {
@@ -131,11 +132,11 @@ class NESLEInterface:
     def loadROM(self, rom_file):
         self.sock.send(json.dumps({
             'rom_file': rom_file
-        }))
-        return json.loads(self.sock.recv(MB))
+        }).encode())
+        return json.loads(self.sock.recv(MB).decode())
 
     def act(self, action):
-        if type(action) is str:
+        if type(action) is str or type(action) is bytes:
             self.sock.send(action)
         elif type(action) is dict:
             self.sock.send(encode_input(**action))
@@ -143,7 +144,8 @@ class NESLEInterface:
             self.sock.send(action_to_encoded_input(action))
         else:
             raise TypeError('Action must be a string, a dict, a python int, or a numpy.int_. '
-                            'This includes subclasses of numpy.int_')
+                            'This includes subclasses of numpy.int_'
+                            'The class\'s type was {}'.format(type(action)))
 
         self.sock.recv_into(self.frame, self.frame_size, socket.MSG_WAITALL)
         self.state.new_frame(self.frame)
@@ -216,7 +218,7 @@ def main():
                 except(IndexError):
                     pass
             frame = client.act(encode_input())
-        show_image(frame)
+        #show_image(frame)
         frame_count += 1
         print('f/s: {}, s: {}, t: {}'.format(frame_count / (time.time() - start_time), client.state.state['score'], client.state.state['time'],))
 
