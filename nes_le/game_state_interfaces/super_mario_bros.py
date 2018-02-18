@@ -303,9 +303,9 @@ def letter_grid(image):
 
 
 if __name__ == "__main__":
-    transition_screen = cv2.imread('/home/mcsmash/dev/data/game_playing/frames/game_1/play_number_14/250.png', cv2.IMREAD_COLOR)
-    game_over_screen = cv2.imread('/home/mcsmash/dev/data/game_playing/frames/game_1/play_number_42/1891.png', cv2.IMREAD_COLOR)
-    example_screen = cv2.imread('/home/mcsmash/dev/data/game_playing/frames/game_1/play_number_14/4000.png', cv2.IMREAD_COLOR)
+    transition_screen = cv2.imread('./test/test_images/super_mario_brothers/transition.png', cv2.IMREAD_COLOR)
+    game_over_screen = cv2.imread('./test/test_images/super_mario_brothers/game_over.png', cv2.IMREAD_COLOR)
+    example_screen = cv2.imread('./test/test_images/super_mario_brothers/example.png', cv2.IMREAD_COLOR)
     white_pixel = np.array([255, 255, 255], dtype='uint8')
 
     es = example_screen
@@ -318,42 +318,3 @@ if __name__ == "__main__":
     print(s._coins(ts))
     print(s._level(ts))
     print(s._lives(ts))
-
-    def decision(font):
-        letters = font.keys()
-        font_imgs = [font[l] for l in letters]
-        catted = np.array(font_imgs) / 255
-        summed = np.sum(catted, axis=0)
-        pixel_dist = np.absolute(summed.astype('int16') - int(len(letters) / 2.0))
-        minimum = np.argmin(pixel_dist)
-        x = minimum / pixel_dist.shape[0]
-        y = minimum % pixel_dist.shape[0]
-
-        pos = {}
-        neg = {}
-        for k, v in font.items():
-            if v[x][y] > 0:
-                pos[k] = font[k]
-            else:
-                neg[k] = font[k]
-        return {
-            True: pos,
-            False: neg,
-            'pixel': (x, y),
-        }
-
-    def create_tree(font):
-        d = decision(font)
-        if len(d[True]) > 1:
-            d[True] = create_tree(d[True])
-        if len(d[False]) > 1:
-            d[False] = create_tree(d[False])
-        return d
-
-    def recognize_letter(tree, sprite, color):
-        recognize_letter(tree[np.array_equal(sprite[tree['pixel'][0]][tree['pixel'][1]], color)],
-                         sprite,
-                         color)
-
-    #tree = create_tree(s.thresh_font)
-
