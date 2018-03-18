@@ -8,6 +8,7 @@ setup(name='nes_le',
       author='Casey Beach',
       author_email='beachc@gmail.com',
       install_requires=[
+          "couchbase==2.3.4",
           "numpy",
           "opencv-python",
       ],

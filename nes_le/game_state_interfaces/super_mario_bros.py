@@ -1,13 +1,16 @@
 import math
 import os
 import sys
+import time
 
 import cv2
 import numpy as np
 
+from apind_utils.image.emulation import game_text
+
 def print_grid_text(frame):
     data = s._get_text(frame)
-    for i, r in enumerate([data[x:x+32] for x in xrange(0, len(data), 32)]):
+    for i, r in enumerate([data[x:x+32] for x in range(0, len(data), 32)]):
         print(i, r)
 
 
@@ -53,30 +56,30 @@ def pretty_print_char(image):
 
 def mutate_font(func):
     font = {
-        '0': '/home/mcsmash/dev/data/game_playing/sprites/game_1/Zero.png',
-        '1': '/home/mcsmash/dev/data/game_playing/sprites/game_1/1.png',
-        '2': '/home/mcsmash/dev/data/game_playing/sprites/game_1/2.png',
-        '3': '/home/mcsmash/dev/data/game_playing/sprites/game_1/3.png',
-        '4': '/home/mcsmash/dev/data/game_playing/sprites/game_1/4.png',
-        '5': '/home/mcsmash/dev/data/game_playing/sprites/game_1/5.png',
-        '6': '/home/mcsmash/dev/data/game_playing/sprites/game_1/6.png',
-        '7': '/home/mcsmash/dev/data/game_playing/sprites/game_1/7.png',
-        '8': '/home/mcsmash/dev/data/game_playing/sprites/game_1/8.png',
-        '9': '/home/mcsmash/dev/data/game_playing/sprites/game_1/9.png',
-        'A': '/home/mcsmash/dev/data/game_playing/sprites/game_1/A.png',
-        'D': '/home/mcsmash/dev/data/game_playing/sprites/game_1/D.png',
-        'E': '/home/mcsmash/dev/data/game_playing/sprites/game_1/E.png',
-        'G': '/home/mcsmash/dev/data/game_playing/sprites/game_1/G.png',
-        'I': '/home/mcsmash/dev/data/game_playing/sprites/game_1/I.png',
-        'L': '/home/mcsmash/dev/data/game_playing/sprites/game_1/L.png',
-        'M': '/home/mcsmash/dev/data/game_playing/sprites/game_1/M.png',
-        'O': '/home/mcsmash/dev/data/game_playing/sprites/game_1/O.png',
-        'R': '/home/mcsmash/dev/data/game_playing/sprites/game_1/R.png',
-        'T': '/home/mcsmash/dev/data/game_playing/sprites/game_1/T.png',
-        'V': '/home/mcsmash/dev/data/game_playing/sprites/game_1/V.png',
-        'W': '/home/mcsmash/dev/data/game_playing/sprites/game_1/W.png',
-        'x': '/home/mcsmash/dev/data/game_playing/sprites/game_1/x.png',
-        '-': '/home/mcsmash/dev/data/game_playing/sprites/game_1/-.png',
+        '0': '/home/mcsmash/dev/ops/couchbase/sprites/sprites/0.png',
+        '1': '/home/mcsmash/dev/ops/couchbase/sprites/sprites/1.png',
+        '2': '/home/mcsmash/dev/ops/couchbase/sprites/sprites/2.png',
+        '3': '/home/mcsmash/dev/ops/couchbase/sprites/sprites/3.png',
+        '4': '/home/mcsmash/dev/ops/couchbase/sprites/sprites/4.png',
+        '5': '/home/mcsmash/dev/ops/couchbase/sprites/sprites/5.png',
+        '6': '/home/mcsmash/dev/ops/couchbase/sprites/sprites/6.png',
+        '7': '/home/mcsmash/dev/ops/couchbase/sprites/sprites/7.png',
+        '8': '/home/mcsmash/dev/ops/couchbase/sprites/sprites/8.png',
+        '9': '/home/mcsmash/dev/ops/couchbase/sprites/sprites/9.png',
+        'A': '/home/mcsmash/dev/ops/couchbase/sprites/sprites/A.png',
+        'D': '/home/mcsmash/dev/ops/couchbase/sprites/sprites/D.png',
+        'E': '/home/mcsmash/dev/ops/couchbase/sprites/sprites/E.png',
+        'G': '/home/mcsmash/dev/ops/couchbase/sprites/sprites/G.png',
+        'I': '/home/mcsmash/dev/ops/couchbase/sprites/sprites/I.png',
+        'L': '/home/mcsmash/dev/ops/couchbase/sprites/sprites/L.png',
+        'M': '/home/mcsmash/dev/ops/couchbase/sprites/sprites/M.png',
+        'O': '/home/mcsmash/dev/ops/couchbase/sprites/sprites/O.png',
+        'R': '/home/mcsmash/dev/ops/couchbase/sprites/sprites/R.png',
+        'T': '/home/mcsmash/dev/ops/couchbase/sprites/sprites/T.png',
+        'V': '/home/mcsmash/dev/ops/couchbase/sprites/sprites/V.png',
+        'W': '/home/mcsmash/dev/ops/couchbase/sprites/sprites/W.png',
+        'x': '/home/mcsmash/dev/ops/couchbase/sprites/sprites/x.png',
+        '-': '/home/mcsmash/dev/ops/couchbase/sprites/sprites/-.png',
     }
     for key, value in font.items():
         func(key, value)
@@ -94,41 +97,43 @@ class State:
             'game_over': False,
         }
         self.font = {
-            '0': cv2.imread('/home/mcsmash/dev/data/game_playing/sprites/game_1/Zero.png'),
-            '1': cv2.imread('/home/mcsmash/dev/data/game_playing/sprites/game_1/1.png'),
-            '2': cv2.imread('/home/mcsmash/dev/data/game_playing/sprites/game_1/2.png'),
-            '3': cv2.imread('/home/mcsmash/dev/data/game_playing/sprites/game_1/3.png'),
-            '4': cv2.imread('/home/mcsmash/dev/data/game_playing/sprites/game_1/4.png'),
-            '5': cv2.imread('/home/mcsmash/dev/data/game_playing/sprites/game_1/5.png'),
-            '6': cv2.imread('/home/mcsmash/dev/data/game_playing/sprites/game_1/6.png'),
-            '7': cv2.imread('/home/mcsmash/dev/data/game_playing/sprites/game_1/7.png'),
-            '8': cv2.imread('/home/mcsmash/dev/data/game_playing/sprites/game_1/8.png'),
-            '9': cv2.imread('/home/mcsmash/dev/data/game_playing/sprites/game_1/9.png'),
-            'A': cv2.imread('/home/mcsmash/dev/data/game_playing/sprites/game_1/A.png'),
-            'D': cv2.imread('/home/mcsmash/dev/data/game_playing/sprites/game_1/D.png'),
-            'E': cv2.imread('/home/mcsmash/dev/data/game_playing/sprites/game_1/E.png'),
-            'G': cv2.imread('/home/mcsmash/dev/data/game_playing/sprites/game_1/G.png'),
-            'I': cv2.imread('/home/mcsmash/dev/data/game_playing/sprites/game_1/I.png'),
-            'L': cv2.imread('/home/mcsmash/dev/data/game_playing/sprites/game_1/L.png'),
-            'M': cv2.imread('/home/mcsmash/dev/data/game_playing/sprites/game_1/M.png'),
-            'O': cv2.imread('/home/mcsmash/dev/data/game_playing/sprites/game_1/O.png'),
-            'R': cv2.imread('/home/mcsmash/dev/data/game_playing/sprites/game_1/R.png'),
-            'T': cv2.imread('/home/mcsmash/dev/data/game_playing/sprites/game_1/T.png'),
-            'V': cv2.imread('/home/mcsmash/dev/data/game_playing/sprites/game_1/V.png'),
-            'W': cv2.imread('/home/mcsmash/dev/data/game_playing/sprites/game_1/W.png'),
-            'x': cv2.imread('/home/mcsmash/dev/data/game_playing/sprites/game_1/x.png'),
-            '-': cv2.imread('/home/mcsmash/dev/data/game_playing/sprites/game_1/-.png'),
+            '0': cv2.imread('/home/mcsmash/dev/ops/couchbase/sprites/sprites/0.png'),
+            '1': cv2.imread('/home/mcsmash/dev/ops/couchbase/sprites/sprites/1.png'),
+            '2': cv2.imread('/home/mcsmash/dev/ops/couchbase/sprites/sprites/2.png'),
+            '3': cv2.imread('/home/mcsmash/dev/ops/couchbase/sprites/sprites/3.png'),
+            '4': cv2.imread('/home/mcsmash/dev/ops/couchbase/sprites/sprites/4.png'),
+            '5': cv2.imread('/home/mcsmash/dev/ops/couchbase/sprites/sprites/5.png'),
+            '6': cv2.imread('/home/mcsmash/dev/ops/couchbase/sprites/sprites/6.png'),
+            '7': cv2.imread('/home/mcsmash/dev/ops/couchbase/sprites/sprites/7.png'),
+            '8': cv2.imread('/home/mcsmash/dev/ops/couchbase/sprites/sprites/8.png'),
+            '9': cv2.imread('/home/mcsmash/dev/ops/couchbase/sprites/sprites/9.png'),
+            'A': cv2.imread('/home/mcsmash/dev/ops/couchbase/sprites/sprites/A.png'),
+            'D': cv2.imread('/home/mcsmash/dev/ops/couchbase/sprites/sprites/D.png'),
+            'E': cv2.imread('/home/mcsmash/dev/ops/couchbase/sprites/sprites/E.png'),
+            'G': cv2.imread('/home/mcsmash/dev/ops/couchbase/sprites/sprites/G.png'),
+            'I': cv2.imread('/home/mcsmash/dev/ops/couchbase/sprites/sprites/I.png'),
+            'L': cv2.imread('/home/mcsmash/dev/ops/couchbase/sprites/sprites/L.png'),
+            'M': cv2.imread('/home/mcsmash/dev/ops/couchbase/sprites/sprites/M.png'),
+            'O': cv2.imread('/home/mcsmash/dev/ops/couchbase/sprites/sprites/O.png'),
+            'R': cv2.imread('/home/mcsmash/dev/ops/couchbase/sprites/sprites/R.png'),
+            'T': cv2.imread('/home/mcsmash/dev/ops/couchbase/sprites/sprites/T.png'),
+            'V': cv2.imread('/home/mcsmash/dev/ops/couchbase/sprites/sprites/V.png'),
+            'W': cv2.imread('/home/mcsmash/dev/ops/couchbase/sprites/sprites/W.png'),
+            'x': cv2.imread('/home/mcsmash/dev/ops/couchbase/sprites/sprites/x.png'),
+            '-': cv2.imread('/home/mcsmash/dev/ops/couchbase/sprites/sprites/-.png'),
             ' ': np.zeros((8, 8, 3), dtype='uint8'),
         }
+        self.thresh_value = 251
+        self.thresh_max_value = 252
         self.thresh_font = {}
         for k, v in self.font.items():
             gray = cv2.cvtColor(v, cv2.COLOR_BGR2GRAY)
-            self.thresh_font[k] = cv2.threshold(gray, 254, 255, cv2.THRESH_BINARY)[1]
+            self.thresh_font[k] = cv2.threshold(gray, self.thresh_value, self.thresh_max_value, cv2.THRESH_BINARY)[1]
 
         self.nega_thresh_font = {}
         for k, v in self.font.items():
             gray = cv2.cvtColor(v, cv2.COLOR_BGR2GRAY)
-            self.nega_thresh_font[k] = cv2.threshold(gray, 254, 255, cv2.THRESH_BINARY_INV)[1]
+            self.nega_thresh_font[k] = cv2.threshold(gray, self.thresh_value, self.thresh_max_value, cv2.THRESH_BINARY_INV)[1]
 
         self.bool_font = self._generate_bool_font(self.font)
         self._frame_number = 0
@@ -167,7 +172,7 @@ class State:
         gsr = self._raw_text(frame)
 
         gray_gsr = [cv2.cvtColor(c, cv2.COLOR_BGR2GRAY) for c in gsr]
-        thresh_gsr = [cv2.threshold(i, 254, 255, cv2.THRESH_BINARY)[1] for i in gray_gsr]
+        thresh_gsr = [cv2.threshold(i, self.thresh_value, self.thresh_max_value, cv2.THRESH_BINARY)[1] for i in gray_gsr]
         letters = []
         for i in thresh_gsr:
             for k, v in self.thresh_font.items():
@@ -205,7 +210,7 @@ class State:
 
     def _recognize_letter(self, sprite):
         gray_sprite = cv2.cvtColor(sprite, cv2.COLOR_BGR2GRAY)
-        thresh_sprite = cv2.threshold(gray_sprite, 254, 255, cv2.THRESH_BINARY)[1]
+        thresh_sprite = cv2.threshold(gray_sprite, self.thresh_value, self.thresh_max_value, cv2.THRESH_BINARY)[1]
         for k, v in self.thresh_font.items():
             if np.array_equal(thresh_sprite, v):
                 return k
@@ -233,7 +238,7 @@ class State:
         }
 
     def _coins(self, frame):
-        return self._get_number(frame, 3, 13, 14)
+        return self._get_number(frame, 3, 13, 15)
 
     def _lives(self, frame):
         return self._get_number(frame, 14, 18, 20)
@@ -312,9 +317,50 @@ if __name__ == "__main__":
     ts = transition_screen
     gs = game_over_screen
 
-    s = State()
-    print_grid_text(ts)
-    print(s._score(ts))
-    print(s._coins(ts))
-    print(s._level(ts))
-    print(s._lives(ts))
+    tss = State()
+    tss.new_frame(ts)
+
+    gss = State()
+    gss.new_frame(gs)
+
+    ess = State()
+    ess.new_frame(es)
+
+    states = {
+        'ts': tss,
+        'gs': gss,
+        'es': ess,
+    }
+    expected = {
+        'ts': {
+            'score': 19450,
+            'coins': 10,
+            'world': 1,
+            'stage': 2,
+            'lives': 4,
+            'time': 0,
+        },
+        'gs': {
+            'score': 56450,
+            'coins': 44,
+            'world': 2,
+            'stage': 1,
+            'lives': 3,
+            'time': None,
+        },
+        'es': {
+            'score': 800,
+            'coins': 3,
+            'world': 1,
+            'stage': 1,
+            'lives': 3,
+            'time': 333,
+        },
+    }
+
+    for image_name, image_test_values in expected.items():
+        print(image_name)
+        print(image_test_values)
+        for k, v in image_test_values.items():
+            if states[image_name].state[k] != v:
+                print('\texpected ({}: {}) != actual({}: {})'.format(k, v, k, states[image_name].state[k]))
