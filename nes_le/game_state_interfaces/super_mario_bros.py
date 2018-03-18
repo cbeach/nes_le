@@ -54,35 +54,6 @@ def pretty_print_char(image):
     print(np.reshape(image[:, :, :1], image.shape[:2]))
 
 
-def mutate_font(func):
-    font = {
-        '0': '/home/mcsmash/dev/ops/couchbase/sprites/sprites/0.png',
-        '1': '/home/mcsmash/dev/ops/couchbase/sprites/sprites/1.png',
-        '2': '/home/mcsmash/dev/ops/couchbase/sprites/sprites/2.png',
-        '3': '/home/mcsmash/dev/ops/couchbase/sprites/sprites/3.png',
-        '4': '/home/mcsmash/dev/ops/couchbase/sprites/sprites/4.png',
-        '5': '/home/mcsmash/dev/ops/couchbase/sprites/sprites/5.png',
-        '6': '/home/mcsmash/dev/ops/couchbase/sprites/sprites/6.png',
-        '7': '/home/mcsmash/dev/ops/couchbase/sprites/sprites/7.png',
-        '8': '/home/mcsmash/dev/ops/couchbase/sprites/sprites/8.png',
-        '9': '/home/mcsmash/dev/ops/couchbase/sprites/sprites/9.png',
-        'A': '/home/mcsmash/dev/ops/couchbase/sprites/sprites/A.png',
-        'D': '/home/mcsmash/dev/ops/couchbase/sprites/sprites/D.png',
-        'E': '/home/mcsmash/dev/ops/couchbase/sprites/sprites/E.png',
-        'G': '/home/mcsmash/dev/ops/couchbase/sprites/sprites/G.png',
-        'I': '/home/mcsmash/dev/ops/couchbase/sprites/sprites/I.png',
-        'L': '/home/mcsmash/dev/ops/couchbase/sprites/sprites/L.png',
-        'M': '/home/mcsmash/dev/ops/couchbase/sprites/sprites/M.png',
-        'O': '/home/mcsmash/dev/ops/couchbase/sprites/sprites/O.png',
-        'R': '/home/mcsmash/dev/ops/couchbase/sprites/sprites/R.png',
-        'T': '/home/mcsmash/dev/ops/couchbase/sprites/sprites/T.png',
-        'V': '/home/mcsmash/dev/ops/couchbase/sprites/sprites/V.png',
-        'W': '/home/mcsmash/dev/ops/couchbase/sprites/sprites/W.png',
-        'x': '/home/mcsmash/dev/ops/couchbase/sprites/sprites/x.png',
-        '-': '/home/mcsmash/dev/ops/couchbase/sprites/sprites/-.png',
-    }
-    for key, value in font.items():
-        func(key, value)
 
 
 class State:
@@ -96,33 +67,8 @@ class State:
             'time': 0,
             'game_over': False,
         }
-        self.font = {
-            '0': cv2.imread('/home/mcsmash/dev/ops/couchbase/sprites/sprites/0.png'),
-            '1': cv2.imread('/home/mcsmash/dev/ops/couchbase/sprites/sprites/1.png'),
-            '2': cv2.imread('/home/mcsmash/dev/ops/couchbase/sprites/sprites/2.png'),
-            '3': cv2.imread('/home/mcsmash/dev/ops/couchbase/sprites/sprites/3.png'),
-            '4': cv2.imread('/home/mcsmash/dev/ops/couchbase/sprites/sprites/4.png'),
-            '5': cv2.imread('/home/mcsmash/dev/ops/couchbase/sprites/sprites/5.png'),
-            '6': cv2.imread('/home/mcsmash/dev/ops/couchbase/sprites/sprites/6.png'),
-            '7': cv2.imread('/home/mcsmash/dev/ops/couchbase/sprites/sprites/7.png'),
-            '8': cv2.imread('/home/mcsmash/dev/ops/couchbase/sprites/sprites/8.png'),
-            '9': cv2.imread('/home/mcsmash/dev/ops/couchbase/sprites/sprites/9.png'),
-            'A': cv2.imread('/home/mcsmash/dev/ops/couchbase/sprites/sprites/A.png'),
-            'D': cv2.imread('/home/mcsmash/dev/ops/couchbase/sprites/sprites/D.png'),
-            'E': cv2.imread('/home/mcsmash/dev/ops/couchbase/sprites/sprites/E.png'),
-            'G': cv2.imread('/home/mcsmash/dev/ops/couchbase/sprites/sprites/G.png'),
-            'I': cv2.imread('/home/mcsmash/dev/ops/couchbase/sprites/sprites/I.png'),
-            'L': cv2.imread('/home/mcsmash/dev/ops/couchbase/sprites/sprites/L.png'),
-            'M': cv2.imread('/home/mcsmash/dev/ops/couchbase/sprites/sprites/M.png'),
-            'O': cv2.imread('/home/mcsmash/dev/ops/couchbase/sprites/sprites/O.png'),
-            'R': cv2.imread('/home/mcsmash/dev/ops/couchbase/sprites/sprites/R.png'),
-            'T': cv2.imread('/home/mcsmash/dev/ops/couchbase/sprites/sprites/T.png'),
-            'V': cv2.imread('/home/mcsmash/dev/ops/couchbase/sprites/sprites/V.png'),
-            'W': cv2.imread('/home/mcsmash/dev/ops/couchbase/sprites/sprites/W.png'),
-            'x': cv2.imread('/home/mcsmash/dev/ops/couchbase/sprites/sprites/x.png'),
-            '-': cv2.imread('/home/mcsmash/dev/ops/couchbase/sprites/sprites/-.png'),
-            ' ': np.zeros((8, 8, 3), dtype='uint8'),
-        }
+        self.font = game_text.get_font('super_mario_bros')
+        self.font[' '] = np.zeros((8, 8, 3), dtype='uint8')
         self.thresh_value = 251
         self.thresh_max_value = 252
         self.thresh_font = {}
@@ -307,7 +253,8 @@ def letter_grid(image):
     return t
 
 
-if __name__ == "__main__":
+def main():
+
     transition_screen = cv2.imread('./test/test_images/super_mario_brothers/transition.png', cv2.IMREAD_COLOR)
     game_over_screen = cv2.imread('./test/test_images/super_mario_brothers/game_over.png', cv2.IMREAD_COLOR)
     example_screen = cv2.imread('./test/test_images/super_mario_brothers/example.png', cv2.IMREAD_COLOR)
@@ -358,9 +305,17 @@ if __name__ == "__main__":
         },
     }
 
+    # TODO: Make these tests a little more advanced
+    num_errors = 0
     for image_name, image_test_values in expected.items():
         print(image_name)
         print(image_test_values)
         for k, v in image_test_values.items():
             if states[image_name].state[k] != v:
                 print('\texpected ({}: {}) != actual({}: {})'.format(k, v, k, states[image_name].state[k]))
+                num_errors += 1
+    print('\nNumber of errors: {}'.format(num_errors))
+
+
+if __name__ == "__main__":
+    main()
