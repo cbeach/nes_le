@@ -2,14 +2,22 @@ from nes_le import game_state_interfaces
 #import curses
 import inspect
 import json
+import math
 import socket
 import sys
 import time
 
-#from matplotlib import pyplot as plt
-#from termcolor import cprint
 import cv2
+import grpc
 import numpy as np
+
+import common_pb2_grpc
+import common_pb2
+import controller
+import deep_thought_pb2_grpc
+import deep_thought_pb2
+import nes_pb2_grpc
+import nes_pb2
 
 MB = 2 ** 20
 port = 9090
@@ -109,13 +117,60 @@ def action_to_encoded_input(action):
 
 
 class NESLEInterface:
-    def __init__(self, game):
+    actions = {
+        0 :  ("NOOP",        nes_pb2.NESControllerState()),
+        1 :  ("UP",          nes_pb2.NESControllerState(dpad=common.pb2.DPad(up=True))),
+        2 :  ("RIGHT",       nes_pb2.NESControllerState(dpad=common.pb2.DPad(right=True))),
+        3 :  ("LEFT",        nes_pb2.NESControllerState(dpad=common.pb2.DPad(left=True))),
+        4 :  ("DOWN",        nes_pb2.NESControllerState(dpad=common.pb2.DPad(down=True))),
+        5 :  ("UPRIGHT",     nes_pb2.NESControllerState(dpad=common.pb2.DPad(up=True, right=True))),
+        6 :  ("UPLEFT",      nes_pb2.NESControllerState(dpad=common.pb2.DPad(up=True, left=True))),
+        7 :  ("DOWNRIGHT",   nes_pb2.NESControllerState(dpad=common.pb2.DPad(down=True, right=True))),
+        8 :  ("DOWNLEFT",    nes_pb2.NESControllerState(dpad=common.pb2.DPad(down=True, left=True))),
+        9 :  ("A",           nes_pb2.NESControllerState(a=True)),
+        10 : ("B",           nes_pb2.NESControllerState(b=True)),
+        11 : ("UPA",         nes_pb2.NESControllerState(a=True, dpad=common.pb2.DPad(up=True))),
+        12 : ("RIGHTA",      nes_pb2.NESControllerState(a=True, dpad=common.pb2.DPad(right=True))),
+        13 : ("LEFTA",       nes_pb2.NESControllerState(a=True, dpad=common.pb2.DPad(left=True))),
+        14 : ("DOWNA",       nes_pb2.NESControllerState(a=True, dpad=common.pb2.DPad(down=True))),
+        15 : ("UPRIGHTA",    nes_pb2.NESControllerState(a=True, dpad=common.pb2.DPad(up=True, right=True))),
+        16 : ("UPLEFTA",     nes_pb2.NESControllerState(a=True, dpad=common.pb2.DPad(up=True, left=True))),
+        17 : ("DOWNRIGHTA",  nes_pb2.NESControllerState(a=True, dpad=common.pb2.DPad(down=True, right=True))),
+        18 : ("DOWNLEFTA",   nes_pb2.NESControllerState(a=True, dpad=common.pb2.DPad(down=True, left=True))),
+        19 : ("UPB",         nes_pb2.NESControllerState(b=True, dpad=common.pb2.DPad(up=True))),
+        20 : ("RIGHTB",      nes_pb2.NESControllerState(b=True, dpad=common.pb2.DPad(right=True))),
+        21 : ("LEFTB",       nes_pb2.NESControllerState(b=True, dpad=common.pb2.DPad(left=True))),
+        22 : ("DOWNB",       nes_pb2.NESControllerState(b=True, dpad=common.pb2.DPad(down=True))),
+        23 : ("UPRIGHTB",    nes_pb2.NESControllerState(b=True, dpad=common.pb2.DPad(up=True, right=True))),
+        24 : ("UPLEFTB",     nes_pb2.NESControllerState(b=True, dpad=common.pb2.DPad(up=True, left=True))),
+        25 : ("DOWNRIGHTB",  nes_pb2.NESControllerState(b=True, dpad=common.pb2.DPad(down=True, right=True))),
+        26 : ("DOWNLEFTB",   nes_pb2.NESControllerState(b=True, dpad=common.pb2.DPad(down=True, left=True))),
+        27 : ("UPAB",        nes_pb2.NESControllerState(a=True, b=True, dpad=common.pb2.DPad(up=True))),
+        28 : ("RIGHTAB",     nes_pb2.NESControllerState(a=True, b=True, dpad=common.pb2.DPad(right=True))),
+        29 : ("LEFTAB",      nes_pb2.NESControllerState(a=True, b=True, dpad=common.pb2.DPad(left=True))),
+        31 : ("DOWNAB",      nes_pb2.NESControllerState(a=True, b=True, dpad=common.pb2.DPad(down=True))),
+        32 : ("UPRIGHTAB",   nes_pb2.NESControllerState(a=True, b=True, dpad=common.pb2.DPad(up=True, right=True))),
+        33 : ("UPLEFTAB",    nes_pb2.NESControllerState(a=True, b=True, dpad=common.pb2.DPad(up=True, left=True))),
+        34 : ("DOWNRIGHTAB", nes_pb2.NESControllerState(a=True, b=True, dpad=common.pb2.DPad(down=True, right=True))),
+        35 : ("DOWNLEFTAB",  nes_pb2.NESControllerState(a=True, b=True, dpad=common.pb2.DPad(down=True, left=True))),
+    }
+
+    def __init__(self, game, event_handler=None):
+        self.event_handler = controller.NESController()
+        self.channel = grpc.insecure_channel('localhost:50051')
+        self.stub = deep_thought_pb2_grpc.EmulatorStub(self.channel)
+        self.device = controller.select_device()
+
+        self.cel = controller.ControllerEventLoop(self.device, self.event_handler)
+        self.cel.start()
+
+        self.stream = self.stub.play_game(self.get_input_state(self.event_handler, frame_rate=60))
+
         self.state = getattr(game_state_interfaces, game).State()
         rom_file = get_rom('nes', game)
-        self.sock = socket.socket()         # Create a socket object
-        self.host = socket.gethostname()  # Get local machine name
-        self.sock.connect((self.host, port))
-        response = self.loadROM(rom_file)
+        #self.sock = socket.socket()         # Create a socket object
+        #self.host = socket.gethostname()  # Get local machine name
+        #self.sock.connect((self.host, port))
         width = int(response['width'])
         height = int(response['height'])
         scale = int(response['scale'])
@@ -128,28 +183,50 @@ class NESLEInterface:
         self.frame_size = self.height * self.width * self.depth
         self.minimal_action_set = np.array(range(34), dtype='int32')
         self.legal_action_set = self.minimal_action_set
+        self.player_action = None
+        self.controller_ready = False
 
-    def loadROM(self, rom_file):
-        self.sock.send(json.dumps({
-            'rom_file': rom_file
-        }).encode())
-        return json.loads(self.sock.recv(MB).decode())
+    def _get_input_state(self, frame_rate=math.inf):
+        while True:
+            #import pdb; pdb.set_trace()
+            time.sleep(1 / frame_rate)
+            while not self.controller_ready:
+                time.sleep(.000001)
+            ms = deep_thought_pb2.MachineState(
+                nes_console_state=nes_pb2.NESConsoleState(
+                    player1_input=self.player_action,
+                    game=common_pb2.Game(
+                        name="Super Mario Brothers",
+                        path="/home/mcsmash/dev/emulators/LaiNES/smb.nes"
+                        #path="/home/app/smb.nes"
+                    )
+                )
+            )
+            self.controller_ready = False
+            yield ms
 
     def act(self, action):
         if type(action) is str or type(action) is bytes:
-            self.sock.send(action)
+            self.player_action = action
         elif type(action) is dict:
-            self.sock.send(encode_input(**action))
+            self.player_action = encode_input(**action)
         elif type(action) is int or issubclass(type(action), np.int_):
-            self.sock.send(action_to_encoded_input(action))
+            self.player_action = action_to_encoded_input(action)
         else:
             raise TypeError('Action must be a string, a dict, a python int, or a numpy.int_. '
                             'This includes subclasses of numpy.int_'
                             'The class\'s type was {}'.format(type(action)))
 
-        self.sock.recv_into(self.frame, self.frame_size, socket.MSG_WAITALL)
-        self.state.new_frame(self.frame)
-        return self.frame
+        if self.controller_ready:
+            # There is already a frame processing. Wait for it to finish before
+            # messing with the controller
+            while self.controller_ready:
+                time.sleep(.0001)
+
+        self.controller_ready = True
+        response = self.responses.next()
+
+        return np.reshape(np.frombuffer(response.raw_frame.data, dtype='uint8'), (240, 256, 4))
 
     def game_over(self):
         return self.state.game_over()
@@ -171,6 +248,8 @@ class NESLEInterface:
 
     def getScreen(self, screen_data=None):
         return self.frame
+    def getScreenDims(self):
+        return (256, 240)
 
     def getScreenRGB(self, screen_data=None):
         return self.frame
@@ -181,9 +260,10 @@ class NESLEInterface:
     def saveScreenPNG(self, filename):
         cv2.imwrite(filename, self.frame)
 
-def main():
+def old_main():
+    nes_con = controller.NESController()
     start_time = time.time()
-    client = NESLEInterface('super_mario_bros')
+    client = NESLEInterface('super_mario_bros', event_handler=nes_con)
     frame_count = 0
     control_sequence = []
     control_sequence.append(
@@ -222,6 +302,8 @@ def main():
         frame_count += 1
         print('f/s: {}, s: {}, t: {}'.format(frame_count / (time.time() - start_time), client.state.state['score'], client.state.state['time'],))
 
+
 if __name__ == '__main__':
-    main()
+    n = NESLEInterface()
+    n.play_game_loop()
 
