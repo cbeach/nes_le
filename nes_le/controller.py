@@ -5,13 +5,10 @@ import threading
 
 from sys import exit
 
-import common_pb2
-import deep_thought_pb2
 import evdev
-import nes_pb2
 
-from common_pb2 import DPad
-from nes_pb2 import NESControllerState
+from .common_pb2 import DPad
+from .nes_pb2 import NESControllerState
 
 
 class NESController:

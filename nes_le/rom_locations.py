@@ -1,14 +1,15 @@
 import os
 
-base_path = '/home/mcsmash/dev/data/game_playing/roms/'
+base_path = '/home/app/'
 
-nes_base_path = os.path.join(base_path, 'nes')
+#nes_base_path = os.path.join(base_path, 'nes')
+nes_base_path = base_path
 atari_2600_base_path = os.path.join(base_path, 'atari_2600')
 ps2_base_path = os.path.join(base_path, 'ps2')
 
 roms = {
     'nes': {
-        'super_mario_bros': os.path.join(nes_base_path, 'super_mario_bros.nes'),
+        'super_mario_bros': os.path.join(nes_base_path, 'smb.nes'),
     },
     'atari_2600': {
         'alien':            os.path.join(nes_base_path, 'alien.bin'),
