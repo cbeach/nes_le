@@ -160,7 +160,8 @@ class NESLEInterface:
         self.controller_ready = True
         response = self.stream.next()
 
-        return np.reshape(np.frombuffer(response.raw_frame.data, dtype='uint8'), (240, 256, 4))
+        self.frame = np.reshape(np.frombuffer(response.raw_frame.data, dtype='uint8'), (240, 256, 4))
+        return self.frame
 
     def game_over(self):
         return self.state.game_over()
@@ -185,6 +186,7 @@ class NESLEInterface:
 
     def getScreen(self, screen_data=None):
         return self.frame
+
     def getScreenDims(self):
         return (256, 240)
 
